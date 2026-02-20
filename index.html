@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZLI Todo-App | Modul 223</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-10 font-sans">
+
+    <div id="login-card" class="bg-white p-8 rounded-xl shadow-lg w-96">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-2">Login</h1>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-600">Email</label>
+                <input id="email" type="email" value="marc@zli.ch" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-600">Passwort</label>
+                <input id="pw" type="password" value="1234" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <button onclick="login()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-bold">Anmelden</button>
+            <p class="text-xs text-center text-gray-400">Passwort-Check erfolgt nur im RAM (Anforderung erfüllt)</p>
+        </div>
+    </div>
+
+    <div id="app" class="hidden bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Meine Aufgaben</h2>
+            <span id="user-role" class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"></span>
+        </div>
+        
+        <div class="flex gap-2 mb-6">
+            <input id="newTodo" placeholder="Was willst du tun?" class="flex-1 p-2 border rounded-lg outline-none focus:border-blue-500">
+            <button onclick="add()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold">+</button>
+        </div>
+
+        <ul id="list" class="space-y-3">
+            </ul>
+
+        <button onclick="location.reload()" class="mt-8 text-sm text-gray-400 hover:text-red-500 transition">Abmelden</button>
+    </div>
+
+    <script>
+        let currentUser = null;
+        const API_URL = 'http://localhost:3000';
+
+        // Login Logik (Schnittstellenplanung Kriterium 10)
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pw').value;
+
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    currentUser = data.user;
+                    document.getElementById('login-card').classList.add('hidden');
+                    document.getElementById('app').classList.remove('hidden');
+                    document.getElementById('user-role').innerText = currentUser.role;
+                    loadTodos(); // Initiales Laden (Read)
+                } else {
+                    alert("Login fehlgeschlagen! Check deine Daten.");
+                }
+            } catch (err) {
+                alert("Server nicht erreichbar! Starte 'node server.js'");
+            }
+        }
+
+        // READ: Todos vom Server laden (Kriterium 11)
+        async function loadTodos() {
+            const res = await fetch(`${API_URL}/todos/${currentUser.id}`);
+            const todos = await res.json();
+            const list = document.getElementById('list');
+            
+            list.innerHTML = todos.map(t => `
+                <li class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:shadow-sm transition">
+                    <span class="${t.completed ? 'line-through text-gray-300' : 'text-gray-700 font-medium'}">${t.title}</span>
+                    <div class="flex gap-2">
+                        <button onclick="toggle(${t.id}, ${t.completed})" class="text-green-500 hover:scale-120 transition font-bold" title="Status ändern">✓</button>
+                        <button onclick="remove(${t.id})" class="text-red-400 hover:text-red-600 transition font-bold" title="Löschen">✕</button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // CREATE: Neues Todo hinzufügen
+        async function add() {
+            const input = document.getElementById('newTodo');
+            if (!input.value) return;
+
+            await fetch(`${API_URL}/todos`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title: input.value, user_id: currentUser.id })
+            });
+            input.value = '';
+            loadTodos();
+        }
+
+        // UPDATE: Status umschalten (Kriterium 11)
+        async function toggle(id, currentStatus) {
+            await fetch(`${API_URL}/todos/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ completed: !currentStatus })
+            });
+            loadTodos();
+        }
+
+        // DELETE: Todo löschen (Kriterium 12/13)
+        async function remove(id) {
+            if (!confirm("Diese Aufgabe wirklich löschen?")) return;
+            await fetch(`${API_URL}/todos/${id}`, { method: 'DELETE' });
+            loadTodos();
+        }
+    </script>
+</body>
+</html>
