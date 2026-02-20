@@ -133,3 +133,59 @@ npm start
 Das Frontend ist anschliessend unter folgender Adresse erreichbar:
 
 http://localhost:3000
+
+# Testkonzept: Multi-User Todo-App (Modul 223)
+
+Das Testkonzept beschreibt die Methoden und Mittel, die verwendet werden, um das Ergebnis auf seine Korrektheit und die Erfüllung der Anforderungen zu überprüfen.
+
+---
+
+## 1. Testumfang
+
+* **Authentifizierung & Login:** Validierung der korrekten Anmeldung sowie der Fehlerbehandlung bei falschen Zugangsdaten.
+* **CRUD-Funktionalität:** Überprüfung der Kernfunktionen: Create (Erstellen), Read (Lesen), Update (Status ändern) und Delete (Löschen).
+* **API-Integration:** Sicherstellen, dass Frontend und Backend korrekt über die REST-Schnittstelle kommunizieren.
+* **Sicherheit (Guardrails):** Verifizierung, dass Passwörter **nicht** in der Datenbank gespeichert werden (Validierung nur im RAM).
+* **System-Health:** Überprüfung der Verfügbarkeit des Backends über den Health-Endpoint.
+
+---
+
+## 2. Testumgebung und -methode
+
+* **Manuelle Blackbox-Tests:** Durchführung der Tests über die Benutzeroberfläche (GUI) im Browser.
+* **Umgebung:** Lokaler Rechner (localhost:3000), Node.js v20+, SQLite3, Chrome Browser.
+
+---
+
+## 3. Testprotokoll (E2E & Funktionstests)
+
+### API & System-Integrität
+
+| Testfall-ID | Titel | Beschreibung | Erwartetes Ergebnis |
+| :--- | :--- | :--- | :--- |
+| **TF-01** | Login-Erfolg | Login mit `marc@zli.ch` und PW `1234`. | Login-Maske verschwindet, Todo-Liste erscheint. |
+| **TF-02** | Login-Fehler | Login mit ungültigen Daten. | Fehlermeldung "Login fehlgeschlagen" erscheint. |
+
+### CRUD-Operationen (Mitglied)
+
+
+
+| Testfall-ID | Titel | Beschreibung | Erwartetes Ergebnis |
+| :--- | :--- | :--- | :--- |
+| **TF-04** | Todo erstellen | Eingabe eines Titels und Klick auf "+". | Todo erscheint sofort in der Liste. |
+| **TF-05** | Todo lesen | Laden der Aufgaben nach dem Login. | Dem User zugeordnete Todos werden angezeigt. |
+| **TF-06** | Status-Update | Klick auf den Haken (✓) bei einem Todo. | Text wird durchgestrichen (Status 1). |
+| **TF-07** | Todo löschen | Klick auf das Löschen-Icon (✕). | Todo verschwindet aus UI und Datenbank. |
+
+### Sicherheit & Guardrails
+
+| Testfall-ID | Titel | Beschreibung | Erwartetes Ergebnis |
+| :--- | :--- | :--- | :--- |
+| **TF-08** | Passwort-Sicherheit | Prüfung der Tabelle `users` in der DB. | Keine Passwort-Spalte vorhanden (Soll-Zustand). |
+| **TF-09** | Abfrage ohne Prompt | Klick auf "+" bei leerem Textfeld. | App ignoriert die Eingabe oder gibt Hinweis. |
+
+---
+
+## 4. Testdurchführung (Zusammenfassung)
+
+Alle Testfälle wurden erfolgreich durchgeführt. Die Applikation reagiert stabil auf fehlerhafte Eingaben und erfüllt die Anforderungen an die Multi-User-Fähigkeit sowie die objektorientierte Umsetzung.
